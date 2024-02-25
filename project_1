@@ -1,0 +1,81 @@
+import itertools
+import math
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import random
+
+
+class Circle:
+    def __init__(self, radius: float, color: str, velocity=0, centre=(0, 0)):
+        self.centre = centre
+        self.radius = radius
+        self.velocity = velocity
+        self.color = color
+
+    def motion(self, move_tuple=(0, 0)):
+        if move_tuple == (0, 0):
+            new_centre = (self.centre[0] + int(self.velocity), self.centre[1] + int(self.velocity))
+        else:
+            new_centre = (self.centre[0] + move_tuple[0], self.centre[1] + move_tuple[1])
+        self.centre = new_centre
+
+    def collision_detection(self, other_circle):
+        distance_bw_circles = math.sqrt(pow((self.centre[0] - other_circle.centre[0]), 2) +
+                                       pow((self.centre[1] - other_circle.centre[1]), 2))
+        return distance_bw_circles < (self.radius + other_circle.radius)
+
+
+class Simulation:
+    ''' Manages all the circle objects'''
+
+    def __init__(self, n_circles, steps, time_1_step ):
+        self.circles = [0]*n_circles
+        self.n_circles = n_circles
+        self.steps = steps
+        self.time_1_step = time_1_step
+        for i in range(self.n_circles):
+            rad = 20
+            cent = (random.randint(200, 800), random.randint(300, 600))
+            vel = random.randint(10,20)
+            colors = ['red', 'blue', 'green', 'black']
+            col = colors[random.randint(0,3)]
+            self.circles[i] = (Circle(rad, col, vel, cent))
+
+
+    def collision(self):
+        ''' handles collision'''
+        for circle in self.circles:
+            circle.motion()
+            for circle1, circle2 in itertools.combinations(self.circles, 2):  #idea of itertools from stack overflow
+                if circle1.collision_detection(circle2) :
+                    circle1.velocity = -circle1.velocity
+                if (circle1.centre[0] or circle1.centre[1] or circle2.centre[0] or circle2.centre[1] )>980:
+                    circle1.velocity = 0
+                    circle1.velocity =  random.randint(-20,-10)
+                if (circle1.centre[0] or circle1.centre[1] or circle2.centre[0] or circle2.centre[1])<100:
+                    circle1.velocity = 0
+                    circle1.velocity =  random.randint(10,20)
+
+
+
+    def animate(self):
+        fig, ax = plt.subplots()
+        ax.set_xlim(0, 1000)
+        ax.set_ylim(0, 1000)
+        circles_plot = [plt.Circle(circle.centre, circle.radius, color=circle.color) for circle in self.circles ]
+
+        def init():
+            for circle_plot in circles_plot:
+                ax.add_patch(circle_plot)
+
+        def update(frame):
+            self.collision()
+            for j in range(len(circles_plot)):
+                circles_plot[j].center = self.circles[j].centre
+            return circles_plot
+
+        anim = FuncAnimation(fig, update, frames= self.steps, init_func=init)
+        plt.show()
+
+a = Simulation(20, 100, 30)
+a.animate()
